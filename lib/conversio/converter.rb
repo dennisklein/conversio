@@ -128,7 +128,7 @@ class Converter
 
   def generate_table_of_content #füge zum geparsten Text ein Inhaltsverzeichnis hinzu -> davor parsen
     raise "No content to generate table of content - Run the parser first!" if @content == nil
-    @content = HTMLTableOfContent.new(@content).get_html()
+    @content = HTMLTableOfContent.new(@content, @table_of_content).get_html()
   end
 
   def render(values = {})

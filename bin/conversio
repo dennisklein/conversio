@@ -72,9 +72,11 @@ Options
 
   Show a list of all available templates.
 
--t, --table-of-content:
+-t, --table-of-content [STYLE]:
 
-  Enables the creation of a table of content.
+  Enables the creation of a table of content with STYLE
+  * 'div' (default) with <div>-elements
+  * 'ul' with <ul>/<li>-elements 
 
 -p, --template NAME:
 
@@ -86,10 +88,11 @@ Options
 EOF
 
 config = <<EOF
-colorize: true
-table_of_content: true
+template: default
+colorize: false
+table_of_content: div
+engine: bluecloth
 template_file:
-engine: 
 EOF
 
 # -------------------------------------------------------------
@@ -124,16 +127,15 @@ begin
 
   user_config = "#{ENV['HOME']}/.conversiorc"
 
-
-  # defaults for program arguments
+  # Initialize options
   options = OpenStruct.new
-  options.ignore_config = false
-  options.colorize = false
+  options.colorize = nil
   options.engine = nil
+  options.table_of_content = nil
   options.template_file = nil
-  options.table_of_content = false
-  options.verbose = false
-  options.template = 'default'
+  options.template = nil
+  options.ignore_config = nil
+  options.verbose = nil
 
   # list of user options
   opts = GetoptLong.new(
@@ -143,7 +145,7 @@ begin
     [ '--ignore-config', '-i', GetoptLong::NO_ARGUMENT],
     [ '--help', '-h', GetoptLong::NO_ARGUMENT ],
     [ '--list-templates', '-l', GetoptLong::NO_ARGUMENT ],
-    [ '--table-of-content', '-t', GetoptLong::NO_ARGUMENT],
+    [ '--table-of-content', '-t', GetoptLong::OPTIONAL_ARGUMENT],
     [ '--template-file', '-f', GetoptLong::REQUIRED_ARGUMENT ],
     [ '--template', '-p', GetoptLong::REQUIRED_ARGUMENT ],
     [ '--verbose', '-v', GetoptLong::NO_ARGUMENT]
@@ -168,7 +170,15 @@ begin
       Template.constants.each { |tpl| puts tpl.downcase }
       exit 0
     when '--table-of-content'
-      options.table_of_content = true
+      case arg
+      when 'ul'
+        options.table_of_content = 'ul'
+      when 'div'
+        options.table_of_content = 'div'
+      else
+        options.table_of_content = 'div'
+        ARGV = [arg] + ARGV
+      end
     when '--template-file'
       options.template_file = arg
     when '--template' 
@@ -178,21 +188,30 @@ begin
     end
   end
 
-
   # get the input source
   src = ARGV[0] || raise("no input defined")
   dst = ARGV[1] # optional parameter!
 
-  # read the default configuration of the user  
+  # apply user defaults  
   if not options.ignore_config and  File.exists? user_config then
     STDERR.puts "Reading configuration file: #{user_config}" if options.verbose
     defaults = YAML.load_file user_config
     # command-line arguments have precedents before the suer configuration
-    options.colorize = defaults['colorize']
+    options.colorize = defaults['colorize'] if options.colorize.nil?
     options.engine = defaults['engine'] if options.engine.nil?
-    options.table_of_content = defaults['table_of_content']
+    options.table_of_content = defaults['table_of_content'] if options.table_of_content.nil?
     options.template_file = defaults['template_file'] if options.template_file.nil?
+    options.template = defaults['template'] if options.template.nil?
   end
+
+  # apply system defaults
+  options.colorize = false if options.colorize.nil?
+  options.engine = 'bluecloth' if options.engine.nil?
+  options.table_of_content = false if options.table_of_content.nil?
+  options.template_file = nil if options.template_file.nil?
+  options.template = 'default' if options.template.nil?
+  options.ignore_config = false if options.ignore_config.nil?
+  options.verbose = false if options.verbose.nil?
 
   STDERR.print 'Configuration: ', options, "\n" if options.verbose 
   
@@ -215,7 +234,7 @@ begin
   converter = Converter.new(template)
   converter.load_parser(options.engine) unless options.engine.nil?
   converter.color = true if options.colorize 
-  converter.table_of_content = true if options.table_of_content
+  converter.table_of_content = options.table_of_content
   
   # get all the input files
   input_files = Array.new

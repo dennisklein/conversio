@@ -139,13 +139,13 @@ begin
   opts = GetoptLong.new(
     [ '--colorize', '-c', GetoptLong::NO_ARGUMENT],
     [ '--config', GetoptLong::NO_ARGUMENT],
-    [ '--engine', '-e', GetoptLong::OPTIONAL_ARGUMENT],
+    [ '--engine', '-e', GetoptLong::REQUIRED_ARGUMENT],
     [ '--ignore-config', '-i', GetoptLong::NO_ARGUMENT],
     [ '--help', '-h', GetoptLong::NO_ARGUMENT ],
     [ '--list-templates', '-l', GetoptLong::NO_ARGUMENT ],
     [ '--table-of-content', '-t', GetoptLong::NO_ARGUMENT],
-    [ '--template-file', '-f', GetoptLong::OPTIONAL_ARGUMENT ],
-    [ '--template', '-p', GetoptLong::OPTIONAL_ARGUMENT ],
+    [ '--template-file', '-f', GetoptLong::REQUIRED_ARGUMENT ],
+    [ '--template', '-p', GetoptLong::REQUIRED_ARGUMENT ],
     [ '--verbose', '-v', GetoptLong::NO_ARGUMENT]
   )
 

@@ -76,7 +76,7 @@ Options
 
   Enables the creation of a table of content with STYLE
   * 'div' (default) with <div>-elements
-  * 'ul' with <ul>/<li>-elements 
+  * 'list' with <ol>/<li>-elements 
 
 -p, --template NAME:
 
@@ -171,8 +171,8 @@ begin
       exit 0
     when '--table-of-content'
       case arg
-      when 'ul'
-        options.table_of_content = 'ul'
+      when 'list'
+        options.table_of_content = 'list'
       when 'div'
         options.table_of_content = 'div'
       else

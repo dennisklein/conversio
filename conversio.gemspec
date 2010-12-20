@@ -3,7 +3,7 @@
 Gem::Specification.new do |s|
   
 s.name = %q{conversio}
-s.version = "0.1.3"
+s.version = "0.1.4"
 
 s.required_rubygems_version = Gem::Requirement.new(">= 1.2") if s.respond_to? :required_rubygems_version=
 s.authors = ["Jörg Behrendt","Victor Penso"]
@@ -40,7 +40,9 @@ s.files = [
   "templates/default.erb",
   "templates/no_css.erb",
   "templates/dark.erb",
-  "templates/light.erb"
+  "templates/light.erb",
+  "templates/paper_print.erb",
+  "templates/slidy.erb"
 ]
 s.rdoc_options = ["--line-numbers", "--inline-source", "--title", "Conversio"]
 s.require_paths = ["lib"]

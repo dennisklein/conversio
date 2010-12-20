@@ -26,14 +26,14 @@ class HTMLTableOfContent
     case @style
     when 'div'
       output << get_html_toc_div_style()
-    when 'ul'
-      output << get_html_toc_ul_style()
+    when 'list'
+      output << get_html_toc_list_style()
     end
-    return %{<div class="#{@table_of_content_div_class}">\n#{output}</div>\n}
+    return %{<div class="#{@table_of_content_div_class}" id="toc">\n#{output}</div>\n}
   end
 
-  # renders <ul>/<li>-elements
-  def get_html_toc_ul_style()
+  # renders <ol>/<li>-elements
+  def get_html_toc_list_style()
     output = String.new
     last_level = 0
     indent = "  "
@@ -41,20 +41,20 @@ class HTMLTableOfContent
       index, level, content, anchor, number = heading
       level = level.to_i
       next if level > 3 # onyl h1, h2 and h3 elements are used
-      content = numbering? ? "#{number}&nbsp;#{content}" : content
+      #content = numbering? ? "<span class=\"numbering\">#{number}</span>&nbsp;#{content}" : content
       li = "<a href=\"##{anchor}\">#{content}</a>"
-      output << "\n<ul>\n<li>#{li}" if last_level < level
+      output << "\n<ol>\n<li>#{li}" if last_level < level
       output << "</li>\n<li>#{li}" if last_level == level
       if last_level > level then
         (last_level-1).downto(level) do |level|
-          output << "</li>\n</ul>"
+          output << "</li>\n</ol>"
         end
         output << "</li>\n<li>#{li}"
       end
       last_level = level
    end
    (last_level-1).downto(0) do |level|
-     output << "</li>\n</ul>"
+     output << "</li>\n</ol>"
    end
    output << "\n"
    return output
@@ -79,7 +79,14 @@ class HTMLTableOfContent
   end
 
   def get_html()
-    return get_html_table_of_content() << "\n" << get_html_with_anchors
+    toc = get_html_table_of_content()
+    content = get_html_with_anchors()
+    toc_pattern = Regexp.new("%TOC")
+    if ( content.sub!(toc_pattern, toc) ) then
+      return content
+    else
+      return toc << "\n" << content
+    end
   end
 
   protected
@@ -89,12 +96,17 @@ class HTMLTableOfContent
   end
 
   def scan_for_heading_elements()
+    toc_found = @html_input.join.scan("%TOC").empty?
     @html_input.each_index do |index|
-      if @html_input[index] =~ %r{<h(\d)(.*?)>(.*?)</h\1>$}m then
-        # Pattern match values:
-        #  $1 -- header tag level, e.g. <h2>...</h2> will be 2
-        #  $3 -- content between the tags
-        @heading_elements << [index, $1, $3, anchor($3)]
+      if toc_found then
+        if @html_input[index] =~ %r{<h(\d)(.*?)>(.*?)</h\1>$}m then
+          # Pattern match values:
+          #  $1 -- header tag level, e.g. <h2>...</h2> will be 2
+          #  $3 -- content between the tags
+          @heading_elements << [index, $1, $3, anchor($3)]
+        end
+      else
+        toc_found = !@html_input[index].scan("%TOC").empty?
       end
     end
   end
@@ -140,11 +152,16 @@ class HTMLTableOfContent
       content = heading[2]
       anchor = heading[3]
       next if level > 3 # only h1,h2, and h3 tags are used 
-      if numbering? then 
-        number = heading[4] 
-        line = %{<h#{level}><a name="#{anchor}"></a>#{number}&nbsp;#{content}</h#{level}>}
-      else
-        line = %{<h#{level}><a name="#{anchor}"></a>#{content}</h#{level}>}
+      case @style
+      when "div"
+        if numbering? then 
+          number = heading[4] 
+          line = %{<h#{level}><a name="#{anchor}"></a><span class="numbering">#{number}</span>&nbsp;#{content}</h#{level}>}
+        else
+          line = %{<h#{level}><a name="#{anchor}"></a>#{content}</h#{level}>}
+        end
+      when "list"
+          line = %{<h#{level}><a name="#{anchor}"></a>#{content}</h#{level}>}
       end
       @html_input[index] = line
     end
